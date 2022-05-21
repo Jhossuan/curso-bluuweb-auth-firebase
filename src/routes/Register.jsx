@@ -1,13 +1,20 @@
-import { useContext, useState } from "react"
+import { useContext } from "react"
 import { useForm } from "react-hook-form"
 import { useNavigate } from "react-router-dom"
+import Button from "../components/Button"
+import FormError from "../components/FormError"
+import FormInput from "../components/FormInput"
+import Title from "../components/Title"
 import { UserContext } from "../context/UserProvider"
+import { erroresFirebase } from "../utils/erroresFirebase"
+import { formValidate } from "../utils/formValidate"
 
 const Register = () => {
 
-    const navigate = useNavigate()
+    const navigate = useNavigate();
     const {register, handleSubmit, getValues, setError, formState : {errors}} = useForm()
-    
+    const {required, patternEmail, minLength, validateTrim, validateEquals} = formValidate()
+
     const {registerUser} = useContext(UserContext)
 
     const onSubmit = async({email, password}) => {
@@ -17,67 +24,55 @@ const Register = () => {
             navigate('/')
         } catch (error) {
             console.log(error.code)
-            switch(error.code){
-              case 'auth/email-already-in-use':
-                setError('email',{
-                  message: 'Usuario ya registrado.'
-                })
-                break;
-              default: 
-                console.log('Ocurrio un error en el server')
-            }
+            const { code, message } = erroresFirebase(error.code)
+            setError(code,{message})
         }
     }
 
   return (
     <div>
-      <h1>Register</h1>
+      <Title text={'Register'}/>
       <form onSubmit={handleSubmit(onSubmit)}>
-        <input
+
+        <FormInput
           type="email"
           placeholder="Ingrese Email"
           {...register("email", {
-            required: {
-              value: true,
-              message: "Campo obligatorio...",
-            },
-            pattern: {
-              value:
-                /^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i,
-              message: "Formato de email incorrecto",
-            },
+            required,
+            pattern: patternEmail,
           })}
-        /> <br />
-        {errors.email && errors.email.message} <br />
-        <input
+          label='Ingresa tu correo'
+          error={errors.email}
+        >
+        <FormError error={errors.email} />
+        </FormInput>
+
+        <FormInput
           type="password"
           placeholder="Ingrese Password"
           {...register("password", {
-            minLength: {
-              value: 6,
-              message: "Minimo 6 carácteres",
-            },
-            validate: {
-              trim: (v)=>{
-                if(!v.trim())return 'No dejes espacios en blanco😛'
-                true
-              } 
-            }
+            minLength,
+            validate: validateTrim,
           })}
-        /> <br />
-        {errors.password && errors.password.message} <br />
-        <input
+          label='Ingresa tu password'
+          error={errors.password}
+        >
+        <FormError error={errors.password} />
+        </FormInput>
+
+        <FormInput
           type="password"
           placeholder="Ingrese Password"
           {...register("repassword", {
-            validate: {
-              equals: (v) =>
-                v === getValues("password") || "No coinciden las contraseñas",
-            },
+            validate: validateEquals(getValues('password')),
           })}
-        /> <br />
-        {errors.repassword && errors.repassword.message} <br />
-        <button type="submit">Enviar</button>
+          label='Repite tu password'
+          error={errors.repassword}
+        >
+        <FormError error={errors.repassword} />
+        </FormInput>
+
+        <Button type={'submit'} text={'Registrarse'}/>
       </form>
     </div>
   );

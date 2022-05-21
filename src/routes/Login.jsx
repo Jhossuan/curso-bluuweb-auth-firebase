@@ -1,34 +1,66 @@
-import { useContext, useState } from "react"
+import { useContext } from "react"
+import { useForm } from "react-hook-form"
 import { useNavigate } from "react-router-dom"
+import Button from "../components/Button"
+import FormError from "../components/FormError"
+import FormInput from "../components/FormInput"
+import Title from "../components/Title"
 import { UserContext } from "../context/UserProvider"
+import { erroresFirebase } from "../utils/erroresFirebase"
+import { formValidate } from "../utils/formValidate"
 
 const Login = () => {
-  const [email, setEmail] = useState('jhossua@test.com')
-  const [password, setPassword] = useState('jhossua')
 
   const {loginUser} = useContext(UserContext)
   const navigate = useNavigate()
+  const {register, handleSubmit, setError, formState : {errors}} = useForm()
+  const {required, patternEmail, minLength, validateTrim } = formValidate()
 
-  const handleSubmit = async(e) => {
-    e.preventDefault()
-    console.log('procesando form : ',email,password)
+
+  const onSubmit = async({email, password}) => {
     try {
-        await loginUser(email, password)
-        console.log('Usuario logeado correctamente...')
+        await loginUser(email,password)
+        console.log('Usuario loggueado correctamente')
         navigate('/')
     } catch (error) {
         console.log(error.code)
-        alert('Este email no se ha encontrado...')
+        const { code, message } = erroresFirebase(error.code)
+        setError(code,{message})
     }
 }
 
   return (
     <div>
-      <h1>Login</h1>
-      <form onSubmit={handleSubmit}>
-          <input type="email" placeholder="Ingrese Email" value={email} onChange={e => setEmail(e.target.value)}/>
-          <input type="password" placeholder="Ingrese Password" value={password} onChange={e => setPassword(e.target.value)}/>
-          <button type="submit">Enviar</button>
+      <Title text={'Login'}/>
+      <form onSubmit={handleSubmit(onSubmit)}>
+
+      <FormInput
+          type="email"
+          placeholder="Ingrese Email"
+          {...register("email", {
+            required,
+            pattern: patternEmail,
+          })}
+          label='Ingresa tu email'
+          error={errors.email}
+        >
+        <FormError error={errors.email} />
+        </FormInput>
+        
+        <FormInput
+          type="password"
+          placeholder="Ingrese Password"
+          {...register("password", {
+            minLength,
+            validate: validateTrim,
+          })}
+          label='Ingresa tu password'
+          error={errors.password}
+        >
+        <FormError error={errors.password} />
+        </FormInput>
+
+          <Button type={'submit'} text={'Ingresar'}/>
       </form>
     </div>
   )
