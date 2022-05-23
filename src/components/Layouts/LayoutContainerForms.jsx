@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom"
 
-const LayoutForms = () => {
+const LayoutContainerForms = () => {
     return(
         <div className="w-96 mx-auto mt-10">
             <Outlet/>
@@ -8,4 +8,4 @@ const LayoutForms = () => {
     )
 }
 
-export default LayoutForms
+export default LayoutContainerForms
